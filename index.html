@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuaGuard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --secondary-color: #0056b3;
+            --background-color: #000000;
+            --card-background: rgba(17, 17, 17, 0.5);
+            --text-color: #e0e0e0;
+            --border-color: #4a4a4a;
+            --shooting-star-color: #007BFF;
+        }
+
+        /* General styles */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* New Shooting Star Animation CSS */
+        .shooting-stars-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: black;
+            background-size: cover;
+            animation: animateBg 50s linear infinite;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        @keyframes animateBg {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .shooting-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: var(--shooting-star-color);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1), 0 0 0 8px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.1);
+            animation: animate 3s linear infinite;
+        }
+
+        .shooting-star::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            height: 1px;
+            background: linear-gradient(90deg, var(--shooting-star-color), transparent);
+        }
+
+        @keyframes animate {
+            0% { transform: rotate(315deg) translateX(0); opacity: 1; }
+            70% { opacity: 1; }
+            100% { transform: rotate(315deg) translateX(-1000px); opacity: 0; }
+        }
+
+        /* Specific animation delays for different stars */
+        .shooting-star:nth-child(1) { top: 0; right: 0; left: initial; animation-delay: 0s; animation-duration: 1s; }
+        .shooting-star:nth-child(2) { top: 0; right: 80px; left: initial; animation-delay: 0.2s; animation-duration: 3s; }
+        .shooting-star:nth-child(3) { top: 80px; right: 0px; left: initial; animation-delay: 0.4s; animation-duration: 2s; }
+        .shooting-star:nth-child(4) { top: 0; right: 180px; left: initial; animation-delay: 0.6s; animation-duration: 1.5s; }
+        .shooting-star:nth-child(5) { top: 0; right: 400px; left: initial; animation-delay: 0.8s; animation-duration: 2.5s; }
+        .shooting-star:nth-child(6) { top: 0; right: 600px; left: initial; animation-delay: 1s; animation-duration: 3s; }
+        .shooting-star:nth-child(7) { top: 300px; right: 0px; left: initial; animation-delay: 1.2s; animation-duration: 1.75s; }
+        .shooting-star:nth-child(8) { top: 0px; right: 700px; left: initial; animation-delay: 1.4s; animation-duration: 1.25s; }
+        .shooting-star:nth-child(9) { top: 0px; right: 1000px; left: initial; animation-delay: 0.75s; animation-duration: 2.25s; }
+        .shooting-star:nth-child(10) { top: 0px; right: 450px; left: initial; animation-delay: 2.75s; animation-duration: 2.75s; }
+
+        /* Header and Navigation */
+        header {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .discord-link {
+            color: var(--text-color);
+            font-size: 1.5em;
+            transition: color 0.3s;
+        }
+
+        .discord-link:hover {
+            color: #7289da;
+        }
+
+        nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+
+        .nav-link.active, .nav-link:hover {
+            color: var(--primary-color);
+            text-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color), 0 0 40px var(--primary-color);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 5;
+        }
+
+        .content-box {
+            background-color: var(--card-background);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            display: none;
+        }
+
+        .content-box.active {
+            display: block;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-shadow: 0 0 8px var(--primary-color);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10s 0;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #222;
+            color: var(--text-color);
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            min-height: 200px;
+        }
+
+        button, .plus-button {
+            padding: 12px 24px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 50px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .plus-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            font-size: 2em;
+            padding: 0;
+            margin-left: 10px;
+            border-radius: 50%;
+        }
+
+        button:hover, .plus-button:hover {
+            background-color: var(--secondary-color);
+            box-shadow: 0 0 15px var(--secondary-color), 0 0 20px var(--primary-color);
+            transform: scale(1.05);
+        }
+
+        button:active, .plus-button:active {
+            transform: scale(0.95);
+        }
+
+        .raw-link-box {
+            background-color: #222;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .raw-link-box a, .raw-link-box code {
+            color: var(--primary-color);
+            font-size: 0.9em;
+        }
+
+        .key-status {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .key-expiry-date {
+            margin-top: 5px;
+            font-size: 1em;
+            color: var(--text-color);
+        }
+
+        .status-panels-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .status-panel {
+            background-color: var(--card-background);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--primary-color);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .status-panel:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-panel .icon {
+            font-size: 3em;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-shadow: 0 0 8px var(--primary-color);
+        }
+
+        .status-panel h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: var(--primary-color);
+        }
+
+        .status-panel p {
+            margin-top: 5px;
+        }
+
+        .plan-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .plan-button {
+            background-color: var(--card-background);
+            border: 2px solid var(--primary-color);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .plan-button:hover {
+            background-color: rgba(34, 34, 34, 0.5);
+            box-shadow: 0 0 15px var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .plan-button h3 {
+            margin: 0 0 5px;
+            color: var(--primary-color);
+        }
+
+        .plan-button p {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 500px;
+            background-color: var(--card-background);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7), 0 0 20px var(--primary-color);
+        }
+
+        .modal-content {
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .modal-content .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        /* New notification animation styles */
+        @keyframes slideIn {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--card-background);
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 1002;
+            display: none;
+            text-align: center;
+            border: 2px solid var(--primary-color);
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+
+        .notification.show {
+            animation: slideIn 0.5s forwards;
+        }
+
+        .notification.hide {
+            animation: slideOut 0.5s forwards;
+        }
+
+        .notification .close-button {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        /* New notification style with transparency and glow */
+        #action-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(17, 17, 17, 0.7); /* Transparent background */
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px var(--primary-color); /* Blue glow */
+            z-index: 1005;
+            display: none;
+            text-align: center;
+            width: 300px;
+            animation: smoothAppear 0.5s ease-in-out forwards;
+        }
+        
+        @keyframes smoothAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: var(--card-background);
+            border-top: 2px solid var(--primary-color);
+            margin-top: auto;
+            z-index: 10;
+        }
+
+        .script-manager-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .script-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .script-item {
+            background-color: var(--card-background);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .script-item .script-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+        }
+
+        .script-item .script-info .id-and-key {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .script-item .script-name {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .script-item .script-link {
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+
+        .script-item .script-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .script-item .script-actions button {
+            padding: 8px;
+            min-width: 40px;
+            border-radius: 5px;
+            font-size: 1em;
+            box-shadow: 0 0 5px var(--primary-color);
+        }
+
+        .file-upload-section {
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-section:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .file-upload-section i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(34, 34, 34, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .user-list-item:hover {
+            background-color: rgba(51, 51, 51, 0.5);
+        }
+
+        /* Hidden textarea for copying */
+        .hidden-copy-field {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+
+        .user-lists-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .user-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: rgba(34, 34, 34, 0.5);
+            border-radius: 5px;
+        }
+
+        .user-list-item .remove-user {
+            background: none;
+            border: none;
+            color: #ff5555;
+            cursor: pointer;
+        }
+
+        /* New AI Button Container and Chatbot Modal Styling */
+        .ai-button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1004;
+        }
+
+        #chatbot-modal {
+            width: 90%;
+            max-width: 300px;
+            height: 400px;
+            bottom: 80px;
+            top: unset;
+            right: 20px;
+            left: unset;
+            transform: unset;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7), 0 0 20px var(--primary-color);
+            border-radius: 15px;
+            z-index: 1003;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            background-color: rgba(17, 17, 17, 0.7);
+        }
+
+        #chatbot-modal.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #chatbot-modal .modal-content {
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chatbot-modal #chatbot-messages {
+            flex-grow: 1;
+            height: 100%;
+            max-height: 100%;
+            overflow-y: auto;
+            background-color: rgba(34, 34, 34, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            nav {
+                gap: 10px;
+            }
+
+            .nav-link {
+                font-size: 1em;
+            }
+
+            .content-box {
+                padding: 20px;
+            }
+
+            .status-panels-container {
+                grid-template-columns: 1fr;
+            }
+
+            .notification {
+                width: calc(100% - 40px);
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+            }
+
+            #chatbot-modal {
+                max-width: 100%;
+                width: 100%;
+                right: 0;
+                bottom: 0;
+                border-radius: 15px 15px 0 0;
+                height: 50vh;
+                max-height: 50vh;
+                display: none;
+                opacity: 0;
+                transform: translateY(100%);
+                transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+                background-color: rgba(17, 17, 17, 0.7);
+            }
+
+            #chatbot-modal.show {
+                display: block;
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            #chatbot-modal .modal-content {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            #chatbot-modal #chatbot-messages {
+                flex-grow: 1;
+                height: auto;
+                max-height: unset;
+            }
+        }
+        
+        .free-for-all-button {
+            background-color: #555; /* Default off state color */
+            transition: background-color 0.3s ease;
+        }
+
+        .free-for-all-button.on {
+            background-color: var(--primary-color); /* On state color */
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div class="shooting-stars-background">
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+        <span class="shooting-star"></span>
+    </div>
+    <header>
+        <a href="https://discord.gg/your-invite-link" target="_blank" class="discord-link" title="Join our Discord">
+            <i class="fab fa-discord"></i>
+        </a>
+        <h1><i class="fas fa-shield-alt"></i> LuaGuard</h1>
+        <nav id="main-nav">
+            <a id="nav-home" class="nav-link active" data-tab="home"><i class="fas fa-home"></i> Home</a>
+            <a id="nav-panel" class="nav-link" data-tab="panel" style="display: none;"><i class="fas fa-terminal"></i> Panel</a>
+            <a id="nav-statues" class="nav-link" data-tab="statues"><i class="fas fa-gavel"></i> Statues</a>
+            <a id="nav-plans" class="nav-link" data-tab="plans"><i class="fas fa-gem"></i> Plans</a>
+            <a id="nav-about" class="nav-link" data-tab="about"><i class="fas fa-info-circle"></i> About</a>
+            <a id="nav-logout" class="nav-link" onclick="logout()" style="display: none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <a id="nav-login" class="nav-link" data-tab="login"><i class="fas fa-sign-in-alt"></i> Login</a>
+        </nav>
+    </header>
+    <div class="container" id="container">
+        <div id="login" class="content-box active">
+            <h2>Login</h2>
+            <input type="text" id="api-key" placeholder="Enter API Key">
+            <button onclick="login()">Login</button>
+            <button id="get-key-btn" onclick="showGetKeyModal()">Get a Free Key</button>
+            <button id="buy-key-btn" onclick="showBuyKeyModal()" style="display: none;">Buy a Key</button>
+        </div>
+        <div id="home" class="content-box">
+            <h2>Dashboard</h2>
+            <div id="key-info" class="key-status"></div>
+        </div>
+        <div id="panel" class="content-box">
+            <div class="script-manager-header">
+                <span style="font-size: 1.5em; font-weight: bold; color: var(--text-color);">Add a Script</span>
+                <button class="plus-button" onclick="showAddScriptModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="script-list" class="script-list-container"></div>
+        </div>
+        <div id="statues" class="content-box">
+            <h2>Statues</h2>
+            <div class="status-panels-container">
+                <div class="status-panel">
+                    <div class="icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3>Executions</h3>
+                    <p id="executions-count">0</p>
+                </div>
+                <div class="status-panel">
+                    <div class="icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Key Remaining</h3>
+                    <p id="days-left">0 days</p>
+                </div>
+            </div>
+        </div>
+        <div id="plans" class="content-box">
+            <h2>Upgrade Your Plan</h2>
+            <p>Choose a plan that fits your needs. Each plan comes with a new, permanent key.</p>
+            <div id="upgrade-plans" class="plan-options">
+                <button class="plan-button" onclick="sendToPayment('1-month')">
+                    <h3>1 Month</h3>
+                    <p>Access for one month</p>
+                </button>
+                <button class="plan-button" onclick="sendToPayment('5-months')">
+                    <h3>5 Months</h3>
+                    <p>Extended access</p>
+                </button>
+                <button class="plan-button" onclick="sendToPayment('1-year')">
+                    <h3>1 Year</h3>
+                    <p>Best value for long-term use</p>
+                </button>
+                <button class="plan-button" onclick="sendToPayment('2-years')">
+                    <h3>2 Years</h3>
+                    <p>Maximum value and convenience</p>
+                </button>
+            </div>
+        </div>
+        <div id="about" class="content-box">
+            <h2>About Us</h2>
+            <p>At LuaGuard, we are dedicated to providing a secure and reliable platform for developers to manage and protect their Roblox scripts.</p>
+            <p>Our service allows you to host your Lua code behind a powerful API, ensuring only authorized users can execute it. With our advanced whitelist and blacklist systems, you have complete control over who has access to your creations.</p>
+            <p>We are committed to helping you safeguard your intellectual property and provide a seamless experience for your users.</p>
+        </div>
+    </div>
+    <div id="add-script-modal" class="modal">
+        <span class="close-button" onclick="closeModal('add-script-modal')">&times;</span>
+        <div class="modal-content">
+            <h3>Add a Script</h3>
+            <p>Paste your code below to generate a raw link with a unique key.</p>
+            <textarea id="code-input" placeholder="Paste your code here" rows="10"></textarea>
+            <button onclick="submitCode()">Submit</button>
+        </div>
+    </div>
+    <div id="user-lists-modal" class="modal">
+        <span class="close-button" onclick="closeModal('user-lists-modal')">&times;</span>
+        <div class="modal-content">
+            <h3>Manage User Lists for <span id="list-script-id"></span></h3>
+            <h4>Whitelist</h4>
+            <input type="text" id="whitelist-user-input" placeholder="Enter User ID to Whitelist">
+            <button onclick="addUserToList('whitelist')">Add to Whitelist</button>
+            <div id="whitelist-container" class="user-lists-container"></div>
+            <h4>Blacklist</h4>
+            <input type="text" id="blacklist-user-input" placeholder="Enter User ID to Blacklist">
+            <button onclick="addUserToList('blacklist')">Add to Blacklist</button>
+            <div id="blacklist-container" class="user-lists-container"></div>
+        </div>
+    </div>
+    <div id="free-key-modal" class="modal">
+        <span class="close-button" onclick="closeModal('free-key-modal')">&times;</span>
+        <div class="modal-content">
+            <h3>Get a Free Key</h3>
+            <p>Click below to generate a one-time free API key that expires in 30 days.</p>
+            <button onclick="generateFreeKey()">Copy Free Key</button>
+        </div>
+    </div>
+    <div id="buy-key-modal" class="modal">
+        <span class="close-button" onclick="closeModal('buy-key-modal')">&times;</span>
+        <div class="modal-content">
+            <h3>Buy a Key</h3>
+            <p>Choose a plan that fits your needs. Each plan comes with a new, permanent key.</p>
+            <div class="plan-options">
+                <button class="plan-button" onclick="sendToPayment('1-month')">
+                    <h3>1 Month</h3>
+                    <p>Access for one month</p>
+                </button>
+                <button class="plan-button" onclick="sendToPayment('5-months')">
+                    <h3>5 Months</h3>
+                    <p>Extended access</p>
+                </button>
+                <button class="plan-button" onclick="sendToPayment('1-year')">
+                    <h3>1 Year</h3>
+                    <p>Best value for long-term use</p>
+                </button>
+                <button class="plan-button" onclick="sendToPayment('2-years')">
+                    <h3>2 Years</h3>
+                    <p>Maximum value and convenience</p>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="purchase-notification" class="notification">
+        <span class="close-button" onclick="closeNotification()">&times;</span>
+        <div id="notification-content"></div>
+        <button id="notification-copy-btn" style="display:none;" onclick="copyKeyFromNotification()">Copy Key</button>
+    </div>
+    <div class="ai-button-container">
+        <button class="plus-button" onclick="toggleChatbot()">
+            <i class="fas fa-robot"></i>
+        </button>
+    </div>
+    <div id="chatbot-modal" class="modal">
+        <span class="close-button" onclick="toggleChatbot()">&times;</span>
+        <div class="modal-content">
+            <h3>AI Assistant</h3>
+            <div id="chatbot-messages">
+                <p><strong>Bot:</strong> Hello! I'm an AI assistant for LuaGuard. Ask me anything about the website's features, like how to create a script or how to use whitelists.</p>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <input type="text" id="chatbot-input" placeholder="Type your message here..." onkeydown="handleChatInput(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+    <div id="action-notification" style="display: none;">
+        <span id="action-notification-message"></span>
+    </div>
+    <div class="overlay" id="overlay" onclick="closeAllModals()"></div>
+    <footer>
+        <p>&copy; 2025 LuaGuard. All rights reserved.</p>
+    </footer>
+    <script>
+        const OWNER_KEY = "Ownerspecialistkey=Keyownermenobody00019";
+        const API_BASE_URL = "https://bgfn-thrgfdgbhjmyt65ergfbhjyut6t5refgfbn-lyr9.onrender.com/api";
+        let currentScriptIdForLists = null;
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentBoxes = document.querySelectorAll('.content-box');
+        const navHome = document.getElementById('nav-home');
+        const navLogin = document.getElementById('nav-login');
+        const navPanel = document.getElementById('nav-panel');
+        const navLogout = document.getElementById('nav-logout');
+        const navPlans = document.getElementById('nav-plans');
+        let executions = {};
+        let pollingInterval = null;
+
+        const gamePasses = {
+            '1-month': '1386962628',
+            '5-months': '1386480582',
+            '1-year': '1386722619',
+            '2-years': '1386992569'
+        };
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                const tabName = event.target.closest('.nav-link').getAttribute('data-tab');
+                showTab(tabName);
+            });
+        });
+
+        function showTab(tabName) {
+            navLinks.forEach(link => link.classList.remove('active'));
+            contentBoxes.forEach(box => box.classList.remove('active'));
+            const targetLink = document.querySelector(`[data-tab="${tabName}"]`);
+            if (targetLink) targetLink.classList.add('active');
+            const targetBox = document.getElementById(tabName);
+            if (targetBox) targetBox.classList.add('active');
+            if (tabName === 'statues') {
+                updateExecutionsCount();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.location.pathname.startsWith('/raw/')) {
+                document.body.innerHTML = `
+                    <div style="background-color: black; color: var(--primary-color); text-align: center; padding-top: 50vh; transform: translateY(-50%);">
+                        <h1>You are not authorized to see this code.</h1>
+                    </div>
+                `;
+                document.body.style.backgroundImage = 'radial-gradient(circle, var(--primary-color) 0.1%, transparent 1%)';
+                document.body.style.backgroundSize = '50px 50px';
+                document.body.style.animation = 'moveStars 60s linear infinite';
+            } else {
+                const loggedIn = localStorage.getItem('loggedIn');
+                if (loggedIn === 'true') {
+                    showLoggedInUI();
+                } else {
+                    showLoggedOutUI();
+                }
+            }
+        });
+
+        function showLoggedInUI() {
+            navLogin.style.display = 'none';
+            navLogout.style.display = 'flex';
+            navPanel.style.display = 'flex';
+            navHome.classList.add('active');
+            document.getElementById('login').classList.remove('active');
+            document.getElementById('home').classList.add('active');
+            updateKeyStatus();
+            loadScripts();
+        }
+
+        function showLoggedOutUI() {
+            localStorage.removeItem('loggedIn');
+            navLogin.style.display = 'flex';
+            navLogout.style.display = 'none';
+            navPanel.style.display = 'none';
+            navLinks.forEach(link => link.classList.remove('active'));
+            document.getElementById('login').classList.add('active');
+        }
+
+        function login() {
+            const apiKey = document.getElementById("api-key").value;
+            const storedKeys = JSON.parse(localStorage.getItem("apiKeys") || "{}");
+            const currentTime = Date.now();
+            if (apiKey === OWNER_KEY) {
+                localStorage.setItem("loggedIn", "true");
+                localStorage.setItem("currentKey", apiKey);
+                localStorage.setItem("keyExpiry", "never");
+                showLoggedInUI();
+            } else if (storedKeys[apiKey]) {
+                const keyData = storedKeys[apiKey];
+                const keyExpiry = keyData.expiry;
+                if (currentTime > keyExpiry) {
+                    showNotification("This key has expired. Please buy a new one.", null);
+                    document.getElementById('get-key-btn').style.display = 'none';
+                    document.getElementById('buy-key-btn').style.display = 'block';
+                    return;
+                }
+                localStorage.setItem("loggedIn", "true");
+                localStorage.setItem("currentKey", apiKey);
+                localStorage.setItem("keyExpiry", keyExpiry);
+                showLoggedInUI();
+            } else {
+                showNotification("Invalid API key.", null);
+            }
+        }
+
+        function logout() {
+            showLoggedOutUI();
+            showTab('login');
+        }
+
+        function updateKeyStatus() {
+            const keyInfoDiv = document.getElementById('key-info');
+            const keyExpiry = localStorage.getItem('keyExpiry');
+            if (keyExpiry === 'never') {
+                keyInfoDiv.innerHTML = `<i class="fas fa-key"></i>Your key is a **permanent** owner key.`;
+                document.getElementById('days-left').textContent = 'Never';
+            } else {
+                const expiryDate = new Date(parseInt(keyExpiry));
+                const timeLeft = Math.floor((keyExpiry - Date.now()) / (1000 * 60 * 60 * 24));
+                keyInfoDiv.innerHTML = `<i class="fas fa-hourglass-half"></i> Your key has **${timeLeft} days** left.`;
+                keyInfoDiv.innerHTML += `<div class="key-expiry-date">Expires: ${expiryDate.toLocaleString()}</div>`;
+                document.getElementById('days-left').textContent = `${timeLeft} days`;
+            }
+        }
+
+        function updateExecutionsCount() {
+            const formatNumber = (num) => {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+                }
+                if (num >= 1000) {
+                    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+                }
+                return num;
+            };
+            let totalExecutions = 0;
+            for (const scriptId in executions) {
+                if (executions.hasOwnProperty(scriptId)) {
+                    totalExecutions += executions[scriptId];
+                }
+            }
+            document.getElementById('executions-count').textContent = formatNumber(totalExecutions);
+        }
+
+        function showAddScriptModal() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('add-script-modal').style.display = 'block';
+        }
+
+        async function submitCode() {
+            const code = document.getElementById("code-input").value;
+            if (!code) {
+                showNotification("Please enter some code to submit.", null);
+                return;
+            }
+            const scriptData = { code: code };
+            try {
+                const response = await fetch(API_BASE_URL + "/scripts", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scriptData)
+                });
+                const result = await response.json();
+                showNotification(`Script submitted! ID: ${result.id}\nKey: ${result.key}`, null);
+                document.getElementById('code-input').value = '';
+                closeModal('add-script-modal');
+                loadScripts();
+            } catch (error) {
+                console.error("Error submitting script:", error);
+                showNotification("Failed to submit script to server.", null);
+            }
+        }
+
+        async function loadScripts() {
+            const scriptListContainer = document.getElementById('script-list');
+            scriptListContainer.innerHTML = '';
+            try {
+                const response = await fetch(API_BASE_URL + "/scripts");
+                const scripts = await response.json();
+                scripts.forEach(script => {
+                    const rawUrl = `loadstring(game:HttpGet("https://bgfn-thrgfdgbhjmyt65ergfbhjyut6t5refgfbn-lyr9.onrender.com/raw/${script.id}?key=${script.key}&userId=" .. game.Players.LocalPlayer.UserId))()`;
+                    const scriptItem = document.createElement('div');
+                    scriptItem.className = 'script-item';
+                    const freeForAllClass = script.freeForAll ? 'on' : '';
+                    scriptItem.innerHTML = `
+                        <div class="script-info">
+                            <div class="id-and-key">
+                                <div class="script-name">Script ID: ${script.id}</div>
+                                <div class="script-link">Key: ${script.key}</div>
+                            </div>
+                            <div class="script-actions">
+                                <button onclick="copyRawLink('${script.id}', '${script.key}')"><i class="fas fa-copy"></i></button>
+                                <button onclick="showUserListsModal('${script.id}')"><i class="fas fa-users"></i></button>
+                                <button id="free-for-all-btn-${script.id}" class="free-for-all-button ${freeForAllClass}" onclick="toggleFreeForAll('${script.id}')"><i class="fas fa-unlock"></i></button>
+                                <button onclick="deleteScript('${script.id}')"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>
+                        <textarea class="hidden-copy-field" id="copy-field-${script.id}"></textarea>
+                    `;
+                    scriptListContainer.appendChild(scriptItem);
+                });
+            } catch (error) {
+                console.error("Error loading scripts:", error);
+                showNotification("Failed to load scripts. Please ensure the server is running.", null);
+            }
+        }
+
+        async function deleteScript(id) {
+            try {
+                await fetch(API_BASE_URL + `/scripts/${id}`, { method: 'DELETE' });
+                showActionNotification('Script deleted successfully.');
+                loadScripts();
+            } catch (error) {
+                console.error("Error deleting script:", error);
+                showActionNotification('Failed to delete script.');
+            }
+        }
+
+        function copyRawLink(id, key) {
+            const copyField = document.getElementById(`copy-field-${id}`);
+            const rawUrl = `loadstring(game:HttpGet("https://bgfn-thrgfdgbhjmyt65ergfbhjyut6t5refgfbn-lyr9.onrender.com/raw/${id}?key=${key}&userId=" .. game.Players.LocalPlayer.UserId))()`;
+            copyField.value = rawUrl;
+            copyField.select();
+            document.execCommand('copy');
+            showActionNotification('Loadstring copied to clipboard!');
+        }
+
+        async function showUserListsModal(scriptId) {
+            currentScriptIdForLists = scriptId;
+            document.getElementById('list-script-id').textContent = scriptId;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('user-lists-modal').style.display = 'block';
+            await refreshUserLists(scriptId);
+        }
+
+        async function refreshUserLists(scriptId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${scriptId}`);
+                const lists = await response.json();
+                const whitelistContainer = document.getElementById('whitelist-container');
+                const blacklistContainer = document.getElementById('blacklist-container');
+                whitelistContainer.innerHTML = '';
+                blacklistContainer.innerHTML = '';
+                if (lists.whitelist) {
+                    lists.whitelist.forEach(userId => {
+                        const userItem = document.createElement('div');
+                        userItem.className = 'user-list-item';
+                        userItem.innerHTML = `<span>${userId}</span><button class="remove-user" onclick="removeUserFromList('${scriptId}', '${userId}', 'whitelist')"><i class="fas fa-times"></i></button>`;
+                        whitelistContainer.appendChild(userItem);
+                    });
+                }
+                if (lists.blacklist) {
+                    lists.blacklist.forEach(userId => {
+                        const userItem = document.createElement('div');
+                        userItem.className = 'user-list-item';
+                        userItem.innerHTML = `<span>${userId}</span><button class="remove-user" onclick="removeUserFromList('${scriptId}', '${userId}', 'blacklist')"><i class="fas fa-times"></i></button>`;
+                        blacklistContainer.appendChild(userItem);
+                    });
+                }
+            } catch (error) {
+                console.error("Error refreshing user lists:", error);
+                showNotification("Failed to load user lists.", null);
+            }
+        }
+
+        async function addUserToList(listType) {
+            const userIdInput = document.getElementById(`${listType}-user-input`);
+            const userId = userIdInput.value.trim();
+            const scriptId = currentScriptIdForLists;
+            if (!userId) {
+                showActionNotification("Please enter a User ID.");
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${scriptId}/${listType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+                if (response.ok) {
+                    userIdInput.value = '';
+                    await refreshUserLists(scriptId);
+                    showActionNotification(`User ID ${userId} added to ${listType}.`);
+                } else {
+                    showActionNotification(`Failed to add user to ${listType}.`);
+                }
+            } catch (error) {
+                console.error(`Error adding user to ${listType} list:`, error);
+                showActionNotification('An error occurred while communicating with the server.');
+            }
+        }
+
+        async function removeUserFromList(scriptId, userId, listType) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${scriptId}/${listType}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+                if (response.ok) {
+                    await refreshUserLists(scriptId);
+                    showActionNotification(`User ID ${userId} removed from ${listType}.`);
+                } else {
+                    showActionNotification(`Failed to remove user from ${listType}.`);
+                }
+            } catch (error) {
+                console.error(`Error removing user from ${listType} list:`, error);
+                showActionNotification('An error occurred while communicating with the server.');
+            }
+        }
+
+        async function toggleFreeForAll(scriptId) {
+            const button = document.getElementById(`free-for-all-btn-${scriptId}`);
+            const currentState = button.classList.contains('on');
+            const newState = !currentState;
+            try {
+                const response = await fetch(`${API_BASE_URL}/scripts/${scriptId}/free-for-all`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: newState })
+                });
+                if (response.ok) {
+                    if (newState) {
+                        button.classList.add('on');
+                        showActionNotification('Free for all is now ON for this script.');
+                    } else {
+                        button.classList.remove('on');
+                        showActionNotification('Free for all is now OFF for this script.');
+                    }
+                } else {
+                    showActionNotification('Failed to update "Free for all" status.');
+                }
+            } catch (error) {
+                console.error("Error toggling Free for all:", error);
+                showActionNotification('An error occurred while communicating with the server.');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'purchase-notification') {
+                document.getElementById('overlay').style.display = 'none';
+            }
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function showGetKeyModal() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('free-key-modal').style.display = 'block';
+        }
+
+        function showBuyKeyModal() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('buy-key-modal').style.display = 'block';
+        }
+
+        function generateFreeKey() {
+            const newKey = "temp_key_" + Date.now().toString(36).substr(2, 9);
+            const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+            const storedKeys = JSON.parse(localStorage.getItem("apiKeys") || "{}");
+            storedKeys[newKey] = { expiry: expiry };
+            localStorage.setItem("apiKeys", JSON.stringify(storedKeys));
+            const copyTempElement = document.createElement('textarea');
+            copyTempElement.value = newKey;
+            document.body.appendChild(copyTempElement);
+            copyTempElement.select();
+            document.execCommand('copy');
+            document.body.removeChild(copyTempElement);
+            showNotification(`Generated and copied free key to clipboard! It will expire in 30 days.`, null);
+            closeModal('free-key-modal');
+        }
+
+        function sendToPayment(planName) {
+            const gamePassId = gamePasses[planName];
+            if (!gamePassId) {
+                showNotification("Invalid plan selected.", null);
+                return;
+            }
+            const robloxUrl = `https://www.roblox.com/game-pass/${gamePassId}`;
+            window.open(robloxUrl, '_blank');
+            showNotification('Please complete your purchase on the Roblox website. We will check for your purchase shortly.');
+            pollForPurchase(planName);
+        }
+
+        async function pollForPurchase(planName) {
+            const userId = 'GUEST';
+            if (pollingInterval) clearInterval(pollingInterval);
+            let attempts = 0;
+            const maxAttempts = 12;
+            pollingInterval = setInterval(async () => {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    clearInterval(pollingInterval);
+                    showNotification('Purchase check timed out. If you made a purchase, please try logging in with your key later.', null);
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_BASE_URL}/check-purchase/${userId}/${planName}`);
+                    const result = await response.json();
+                    if (result.status === 'success' && result.key) {
+                        clearInterval(pollingInterval);
+                        const newKey = result.key;
+                        const planDuration = getPlanDuration(planName);
+                        const expiry = Date.now() + planDuration;
+                        const storedKeys = JSON.parse(localStorage.getItem("apiKeys") || "{}");
+                        storedKeys[newKey] = { expiry: expiry };
+                        localStorage.setItem("apiKeys", JSON.stringify(storedKeys));
+                        localStorage.setItem("loggedIn", "true");
+                        localStorage.setItem("currentKey", newKey);
+                        localStorage.setItem("keyExpiry", expiry);
+                        showLoggedInUI();
+                        showNotification(`You have purchased a ${planName} plan! Here is your key: <strong>${newKey}</strong>`, newKey);
+                        closeAllModals();
+                    } else if (result.status === 'not purchased') {
+                        clearInterval(pollingInterval);
+                        showNotification('You did not purchase the gamepass. Please purchase it to get your key.', null);
+                    } else if (result.status === 'pending') {
+                        console.log("Purchase pending...");
+                    }
+                } catch (error) {
+                    console.error("Error polling for purchase:", error);
+                    clearInterval(pollingInterval);
+                    showNotification("An error occurred while checking for your purchase. Please try logging in with your key later.", null);
+                }
+            }, 5000);
+        }
+
+        function getPlanDuration(planName) {
+            switch(planName) {
+                case '1-month': return 30 * 24 * 60 * 60 * 1000;
+                case '5-months': return 5 * 30 * 24 * 60 * 60 * 1000;
+                case '1-year': return 365 * 24 * 60 * 60 * 1000;
+                case '2-years': return 2 * 365 * 24 * 60 * 60 * 1000;
+                default: return 0;
+            }
+        }
+
+        function showNotification(message, key = null) {
+            const notification = document.getElementById('purchase-notification');
+            const content = document.getElementById('notification-content');
+            const copyBtn = document.getElementById('notification-copy-btn');
+            content.innerHTML = message;
+            if (notification.classList.contains('show')) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 500);
+            } else {
+                notification.classList.add('show');
+            }
+            if (key) {
+                copyBtn.style.display = 'block';
+                copyBtn.dataset.key = key;
+            } else {
+                copyBtn.style.display = 'none';
+                copyBtn.dataset.key = '';
+            }
+            setTimeout(() => {
+                closeNotification();
+            }, 5000);
+        }
+
+        function closeNotification() {
+            const notification = document.getElementById('purchase-notification');
+            notification.classList.remove('show');
+            notification.classList.add('hide');
+            setTimeout(() => {
+                notification.classList.remove('hide');
+            }, 500);
+        }
+
+        function copyKeyFromNotification() {
+            const key = document.getElementById('notification-copy-btn').dataset.key;
+            const copyTempElement = document.createElement('textarea');
+            copyTempElement.value = key;
+            document.body.appendChild(copyTempElement);
+            copyTempElement.select();
+            document.execCommand('copy');
+            document.body.removeChild(copyTempElement);
+            showActionNotification('Key copied to clipboard!');
+        }
+
+        // New function to handle the smooth, glowing notification
+        function showActionNotification(message) {
+            const notification = document.getElementById('action-notification');
+            const messageElement = document.getElementById('action-notification-message');
+            messageElement.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); // Notification disappears after 3 seconds
+        }
+
+        function toggleChatbot() {
+            const chatbotModal = document.getElementById('chatbot-modal');
+            const overlay = document.getElementById('overlay');
+            if (chatbotModal.classList.contains('show')) {
+                chatbotModal.classList.remove('show');
+                overlay.classList.remove('active');
+            } else {
+                chatbotModal.classList.add('show');
+                overlay.classList.add('active');
+                document.getElementById('chatbot-input').focus();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+            if (message === '') return;
+            const messagesDiv = document.getElementById('chatbot-messages');
+            messagesDiv.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+            input.value = '';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            try {
+                const response = await fetch('/api/ask-ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: message })
+                });
+                const result = await response.json();
+                messagesDiv.innerHTML += `<p><strong>Bot:</strong> ${result.answer}</p>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                console.error("Error asking AI:", error);
+                messagesDiv.innerHTML += `<p><strong>Bot:</strong> I'm sorry, I couldn't connect to the AI at the moment. Please try again later.</p>`;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+
+        function handleChatInput(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
